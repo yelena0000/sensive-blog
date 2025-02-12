@@ -5,12 +5,25 @@ from django.db.models import Count
 
 
 class PostQuerySet(models.QuerySet):
-    def year(self, year):
-        posts_at_year = self.filter(published_at__year=year).order_by('published_at')
-        return posts_at_year
+
+    def popular(self):
+        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')
+
+    def fetch_with_comments_count(self):
+        posts = self.all()
+        posts_ids = [post.id for post in posts]
+
+        posts_with_comments = Post.objects.filter(id__in=posts_ids).annotate(comments_count=Count('comments'))
+        ids_and_comments = dict(posts_with_comments.values_list('id', 'comments_count'))
+
+        for post in posts:
+            post.comments_count = ids_and_comments[post.id]
+
+        return posts
 
 
 class TagQuerySet(models.QuerySet):
+
     def popular(self):
         return self.annotate(posts_count=Count('posts')).order_by('-posts_count')
 
@@ -21,6 +34,7 @@ class Post(models.Model):
     slug = models.SlugField('Название в виде url', max_length=200)
     image = models.ImageField('Картинка')
     published_at = models.DateTimeField('Дата и время публикации')
+
     objects = PostQuerySet.as_manager()
 
     author = models.ForeignKey(
