@@ -1,4 +1,4 @@
-from django.db.models import Count, Prefetch
+from django.db.models import Count
 from django.shortcuts import render, get_object_or_404
 
 from blog.models import Comment, Post, Tag
@@ -63,12 +63,10 @@ def post_detail(request, slug):
 
     post = get_object_or_404(
         Post.objects
+        .popular()
+        .fetch_with_comments_count()
         .select_related('author')
-        .prefetch_related(prefetch_tags, 'likes', 'comments__author')
-        .annotate(
-            likes_count=Count('likes'),
-            comments_count=Count('comments')
-        ),
+        .prefetch_related(prefetch_tags, 'likes', 'comments__author'),
         slug=slug
     )
 
