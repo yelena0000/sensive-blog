@@ -1,5 +1,5 @@
 from django.db.models import Count, Prefetch
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 
 from blog.models import Comment, Post, Tag
 
@@ -63,15 +63,15 @@ def post_detail(request, slug):
     tag_queryset = Tag.objects.annotate(posts_with_tag=Count('posts'))
     prefetch_tags = Prefetch('tags', queryset=tag_queryset)
 
-    post = (
+    post = get_object_or_404(
         Post.objects
         .select_related('author')
         .prefetch_related(prefetch_tags, 'likes', 'comments__author')
         .annotate(
             likes_count=Count('likes'),
             comments_count=Count('comments')
-        )
-        .get(slug=slug)
+        ),
+        slug=slug
     )
 
     serialized_comments = [
@@ -117,8 +117,7 @@ def tag_filter(request, tag_title):
     tag_queryset = Tag.objects.annotate(posts_with_tag=Count('posts'))
     prefetch_tags = Prefetch('tags', queryset=tag_queryset)
 
-    tag = tag_queryset.filter(
-        title=tag_title).prefetch_related('posts').first()
+    tag = get_object_or_404(tag_queryset.prefetch_related('posts'), title=tag_title)
 
     most_popular_tags = tag_queryset.popular()[:5]
 
