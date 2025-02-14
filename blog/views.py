@@ -4,10 +4,6 @@ from django.shortcuts import render
 from blog.models import Comment, Post, Tag
 
 
-def get_related_posts_count(tag):
-    return tag.posts.count()
-
-
 def serialize_post(post):
     return {
         'title': post.title,
@@ -27,10 +23,6 @@ def serialize_tag(tag):
         'title': tag.title,
         'posts_with_tag': tag.posts_with_tag,
     }
-
-
-def get_likes_count(post):
-    return post.likes_count
 
 
 def index(request):
